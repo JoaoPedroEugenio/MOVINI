@@ -1,4 +1,3 @@
-import tela.TelaCadastro;
 import tela.TelaPrincipal;
 
 public class Main {
