@@ -12,6 +12,18 @@ public class Filme {
 	private String classificao;
 	
 	public Filme() {}
+	public Filme(String titulo, double preco, String distribuidora, String poster, int duracao, int ano_lancamento, String genero,
+			String classificao) {
+		super();
+		this.titulo = titulo;
+		this.preco = preco;
+		this.distribuidora = distribuidora;
+		this.poster = poster;
+		this.duracao = duracao;
+		this.ano_lancamento = ano_lancamento;
+		this.genero = genero;
+		this.classificao = classificao;
+	}
 	public Filme(int id, String titulo, double preco, String distribuidora, String poster, int duracao, int ano_lancamento, String genero,
 			String classificao) {
 		super();

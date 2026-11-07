@@ -8,8 +8,12 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
+import dao.FilmeDAO;
+import modelo.Filme;
+
 @SuppressWarnings("serial")
 public class TelaCadastro extends JFrame {
+    private FilmeDAO filmeDAO = new FilmeDAO();
     final private Color COR_FUNDO_BOTAO = new Color(86, 126, 187);
     final private Color COR_TEXTO_LABEL = new Color(31, 31, 32);
     final private Color COR_TEXTO_BOTAO = new Color(238, 243, 249);
@@ -191,14 +195,17 @@ public class TelaCadastro extends JFrame {
         btnLimpar.setForeground(COR_TEXTO_BOTAO);
         btnLimpar.setBounds(250, btnVoltar.getY(), 160, 50);
         btnLimpar.addActionListener(e -> {
-            txtTitulo.setText("");
-            txtPreco.setText("");
-            txtDistribuidora.setText("");
-            txtPoster.setText("");
-            txtDuracao.setText("");
-            txtAno.setText("");
-            boxGenero.setSelectedIndex(0);
-            boxClassificacao.setSelectedIndex(0);
+        	TelaConfirmacao confirmacao = new TelaConfirmacao(this);
+            if (confirmacao.getDecisao()) {
+                txtTitulo.setText("");
+                txtPreco.setText("");
+                txtDistribuidora.setText("");
+                txtPoster.setText("");
+                txtDuracao.setText("");
+                txtAno.setText("");
+                boxGenero.setSelectedIndex(0);
+                boxClassificacao.setSelectedIndex(0);        
+            }
         });
         add(btnLimpar);
 
@@ -208,6 +215,73 @@ public class TelaCadastro extends JFrame {
         btnSalvar.setBackground(COR_FUNDO_BOTAO);
         btnSalvar.setForeground(COR_TEXTO_BOTAO);
         btnSalvar.setBounds(465, btnVoltar.getY(), 160, 50);
+        btnSalvar.addActionListener(e -> {
+        	TelaConfirmacao confirmacao = new TelaConfirmacao(this);
+            if (confirmacao.getDecisao()) {
+            	Filme filme = criarFilme(txtTitulo, txtPreco, txtDistribuidora, txtPoster, txtDuracao, txtAno, boxGenero, boxClassificacao);
+            	if (filme != null) {
+            		if (filmeDAO.Insert(filme)) {
+            			new TelaSucesso(this, "Filme cadastrado com sucesso!");
+            			txtTitulo.setText("");
+                        txtPreco.setText("");
+                        txtDistribuidora.setText("");
+                        txtPoster.setText("");
+                        txtDuracao.setText("");
+                        txtAno.setText("");
+                        boxGenero.setSelectedIndex(0);
+                        boxClassificacao.setSelectedIndex(0);      
+            		} else {
+            			new TelaErro(this, "Não foi possível salvar o filme no banco de dados.");
+            		}
+            	}
+            }
+        });
         add(btnSalvar);
+    }
+    
+    private Filme criarFilme(JTextField txtTitulo, JTextField txtPreco, JTextField txtDistribuidora, JTextField txtPoster, JTextField txtDuracao, JTextField txtAno, JComboBox<String> boxGenero, JComboBox<String> boxClassificacao) {
+    	Filme filme = null;
+    	try {
+    		String titulo = txtTitulo.getText();
+    		String distribuidora = txtDistribuidora.getText();
+    		String poster = txtPoster.getText();
+    		String genero = boxGenero.getItemAt(boxGenero.getSelectedIndex());
+    		String classificacao = boxClassificacao.getItemAt(boxClassificacao.getSelectedIndex());
+    		if(titulo.isBlank()) {
+    			throw new RuntimeException("O campo Título não foi preenchido.");
+    		}
+    		if(distribuidora.isBlank()) {
+    			throw new RuntimeException("O campo Distribuidora não foi preenchido.");
+    		}
+    		if(boxGenero.getSelectedIndex()==0) {
+    			throw new RuntimeException("Nenhum gênero foi selecionado.");
+    		}
+    		if(boxClassificacao.getSelectedIndex()==0) {
+    			throw new RuntimeException("Nenhuma classificação foi selecionada.");
+    		}
+    		if(poster.isBlank()) {
+    			poster = "/recursos/Erro404.png";
+    		}
+    		Double preco = null;
+    		Integer duracao = null;
+    		Integer ano = null;
+    		try { preco = Double.parseDouble(txtPreco.getText().replace(",", ".")); }
+    		catch (NumberFormatException e) { throw new RuntimeException("O campo Preço deve ser um número."); }
+    		preco = Math.round(preco * 100.0) / 100.0;
+    		try { duracao = Integer.parseInt(txtDuracao.getText()); }
+    		catch (NumberFormatException e) { throw new RuntimeException("O campo Duração deve ser um número inteiro."); }
+    		try { ano = Integer.parseInt(txtAno.getText()); }
+    		catch (NumberFormatException e) { throw new RuntimeException("O campo Ano de Lançamento deve ser um número inteiro."); }
+    		if(preco<0) {
+    			throw new RuntimeException("O Preço não pode ser negativo.");
+    		}
+    		if(duracao<0) {
+    			throw new RuntimeException("A Duração não pode ser negativa.");
+    		}
+        	filme = new Filme(titulo, preco, distribuidora, poster, duracao, ano, genero, classificacao);
+    	} catch(Exception e) {
+    		new TelaErro(this, e.getMessage());
+    	}
+    	return filme;
     }
 }

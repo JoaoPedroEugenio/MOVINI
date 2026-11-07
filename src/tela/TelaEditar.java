@@ -2,14 +2,20 @@ package tela;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.util.ArrayList;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
+import dao.FilmeDAO;
+import modelo.Filme;
+
 @SuppressWarnings("serial")
 public class TelaEditar extends JFrame {
+    private Filme filme;
+    private FilmeDAO filmeDAO = new FilmeDAO();
     final private Color COR_FUNDO_BOTAO = new Color(86, 126, 187);
     final private Color COR_TEXTO_LABEL = new Color(31, 31, 32);
     final private Color COR_TEXTO_BOTAO = new Color(238, 243, 249);
@@ -19,6 +25,11 @@ public class TelaEditar extends JFrame {
     final private Color COR_PAINEL_CABECALHO = new Color(167, 176, 190, 45);
 
     public TelaEditar() {
+        this(null);
+    }
+
+    public TelaEditar(Filme filme) {
+        this.filme = filme;
         setResizable(false);
         setLayout(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -70,6 +81,30 @@ public class TelaEditar extends JFrame {
         btnBuscar.setBackground(COR_FUNDO_BOTAO);
         btnBuscar.setForeground(COR_TEXTO_BOTAO);
         btnBuscar.setBounds(535, 62, 175, 38);
+        btnBuscar.addActionListener(e -> {
+            String busca = txtBusca.getText().trim();
+            try {
+                int id = Integer.parseInt(busca);
+                ArrayList<Filme> resultado = filmeDAO.SelectId(id);
+                if (resultado.isEmpty()) {
+                    new TelaErro(this, "Nenhum filme encontrado com o ID informado.");
+                } else {
+                    new TelaEditar(resultado.get(0));
+                    dispose();
+                }
+            } catch (NumberFormatException ex) {
+                ArrayList<Filme> resultado = filmeDAO.SelectTitulo(busca);
+                if (resultado.isEmpty()) {
+                    new TelaErro(this, "Nenhum filme encontrado com esse título.");
+                } else if (resultado.size() == 1) {
+                    new TelaEditar(resultado.get(0));
+                    dispose();
+                } else {
+                    new TelaBusca(resultado);
+                    dispose();
+                }
+            }
+        });
         add(btnBuscar);
 
         JLabel lblLinhaBusca = new JLabel();
@@ -91,6 +126,7 @@ public class TelaEditar extends JFrame {
         txtTitulo.setBorder(null);
         txtTitulo.setBackground(Color.WHITE);
         txtTitulo.setForeground(COR_TEXTO_LABEL);
+        if (filme != null) { txtTitulo.setText(filme.getTitulo()); }
         add(txtTitulo);
 
         JLabel lblPreco = new JLabel();
@@ -106,6 +142,7 @@ public class TelaEditar extends JFrame {
         txtPreco.setBorder(null);
         txtPreco.setBackground(Color.WHITE);
         txtPreco.setForeground(COR_TEXTO_LABEL);
+        if (filme != null) { txtPreco.setText(String.format("%.2f", filme.getPreco())); }
         add(txtPreco);
 
         JLabel lblDistribuidora = new JLabel();
@@ -121,6 +158,7 @@ public class TelaEditar extends JFrame {
         txtDistribuidora.setBorder(null);
         txtDistribuidora.setBackground(Color.WHITE);
         txtDistribuidora.setForeground(COR_TEXTO_LABEL);
+        if (filme != null) { txtDistribuidora.setText(filme.getDistribuidora()); }
         add(txtDistribuidora);
 
         JLabel lblPoster = new JLabel();
@@ -136,6 +174,7 @@ public class TelaEditar extends JFrame {
         txtPoster.setBorder(null);
         txtPoster.setBackground(Color.WHITE);
         txtPoster.setForeground(COR_TEXTO_LABEL);
+        if (filme != null) { txtPoster.setText(filme.getPoster()); }
         add(txtPoster);
 
         JLabel lblDuracao = new JLabel();
@@ -151,6 +190,7 @@ public class TelaEditar extends JFrame {
         txtDuracao.setBorder(null);
         txtDuracao.setBackground(Color.WHITE);
         txtDuracao.setForeground(COR_TEXTO_LABEL);
+        if (filme != null) { txtDuracao.setText(String.valueOf(filme.getDuracao())); }
         add(txtDuracao);
 
         JLabel lblAno = new JLabel();
@@ -166,6 +206,7 @@ public class TelaEditar extends JFrame {
         txtAno.setBorder(null);
         txtAno.setBackground(Color.WHITE);
         txtAno.setForeground(COR_TEXTO_LABEL);
+        if (filme != null) { txtAno.setText(String.valueOf(filme.getAno_lancamento())); }
         add(txtAno);
 
         JLabel lblGenero = new JLabel();
@@ -182,6 +223,7 @@ public class TelaEditar extends JFrame {
         boxGenero.setFont(new Font("SansSerif", 0, 18));
         boxGenero.setBounds(205, lblGenero.getY(), 505, 32);
         boxGenero.setForeground(COR_TEXTO_LABEL);
+        if (filme != null) { boxGenero.setSelectedItem(filme.getGenero()); }
         add(boxGenero);
 
         JLabel lblClassificacao = new JLabel();
@@ -196,6 +238,7 @@ public class TelaEditar extends JFrame {
         boxClassificacao.setFont(new Font("SansSerif", 0, 18));
         boxClassificacao.setBounds(205, lblClassificacao.getY(), 505, 32);
         boxClassificacao.setForeground(COR_TEXTO_LABEL);
+        if (filme != null) { boxClassificacao.setSelectedItem(filme.getClassificao()); }
         add(boxClassificacao);
 
         
@@ -220,6 +263,21 @@ public class TelaEditar extends JFrame {
         btnExcluir.setBackground(COR_FUNDO_BOTAO);
         btnExcluir.setForeground(COR_TEXTO_BOTAO);
         btnExcluir.setBounds(300, btnVoltar.getY(), 165, 45);
+        btnExcluir.setEnabled(filme != null);
+        btnExcluir.addActionListener(e -> {
+        	TelaConfirmacao confirmacao = new TelaConfirmacao(this);
+            if (confirmacao.getDecisao()) {
+            	if (filme != null) {
+            		if (filmeDAO.DeleteId(this.filme.getId())) {
+            			new TelaSucesso(this, "Filme deletado com sucesso!");
+            			dispose();
+            			new TelaEditar();
+            		} else {
+            			new TelaErro(this, "Não foi possível deletar o filme no banco de dados.");
+            		}
+            	}
+            }
+        });
         add(btnExcluir);
 
         JButton btnAtualizar = new JButton();
@@ -228,6 +286,65 @@ public class TelaEditar extends JFrame {
         btnAtualizar.setBackground(COR_FUNDO_BOTAO);
         btnAtualizar.setForeground(COR_TEXTO_BOTAO);
         btnAtualizar.setBounds(555, btnVoltar.getY(), 165, 45);
+        btnAtualizar.setEnabled(filme != null);
+        btnAtualizar.addActionListener(e -> {
+        	TelaConfirmacao confirmacao = new TelaConfirmacao(this);
+            if (confirmacao.getDecisao()) {
+            	Filme filme = atualizarFilme(txtTitulo, txtPreco, txtDistribuidora, txtPoster, txtDuracao, txtAno, boxGenero, boxClassificacao);
+            	if (filme != null) {
+            		if (filmeDAO.UpdateId(filme, this.filme.getId())) {
+            			new TelaSucesso(this, "Filme atualizado com sucesso!");      
+            		} else {
+            			new TelaErro(this, "Não foi possível atualizar o filme no banco de dados.");
+            		}
+            	}
+            }
+        });
         add(btnAtualizar);
+    }
+    private Filme atualizarFilme(JTextField txtTitulo, JTextField txtPreco, JTextField txtDistribuidora, JTextField txtPoster, JTextField txtDuracao, JTextField txtAno, JComboBox<String> boxGenero, JComboBox<String> boxClassificacao) {
+    	Filme filme = null;
+    	try {
+    		String titulo = txtTitulo.getText();
+    		String distribuidora = txtDistribuidora.getText();
+    		String poster = txtPoster.getText();
+    		String genero = boxGenero.getItemAt(boxGenero.getSelectedIndex());
+    		String classificacao = boxClassificacao.getItemAt(boxClassificacao.getSelectedIndex());
+    		if(titulo.isBlank()) {
+    			throw new RuntimeException("O campo Título não foi preenchido.");
+    		}
+    		if(distribuidora.isBlank()) {
+    			throw new RuntimeException("O campo Distribuidora não foi preenchido.");
+    		}
+    		if(boxGenero.getSelectedIndex()==0) {
+    			throw new RuntimeException("Nenhum gênero foi selecionado.");
+    		}
+    		if(boxClassificacao.getSelectedIndex()==0) {
+    			throw new RuntimeException("Nenhuma classificação foi selecionada.");
+    		}
+    		if(poster.isBlank()) {
+    			poster = "/recursos/Erro404.png";
+    		}
+    		Double preco = null;
+    		Integer duracao = null;
+    		Integer ano = null;
+    		try { preco = Double.parseDouble(txtPreco.getText().replace(",", ".")); }
+    		catch (NumberFormatException e) { throw new RuntimeException("O campo Preço deve ser um número."); }
+    		preco = Math.round(preco * 100.0) / 100.0;
+    		try { duracao = Integer.parseInt(txtDuracao.getText()); }
+    		catch (NumberFormatException e) { throw new RuntimeException("O campo Duração deve ser um número inteiro."); }
+    		try { ano = Integer.parseInt(txtAno.getText()); }
+    		catch (NumberFormatException e) { throw new RuntimeException("O campo Ano de Lançamento deve ser um número inteiro."); }
+    		if(preco<0) {
+    			throw new RuntimeException("O Preço não pode ser negativo.");
+    		}
+    		if(duracao<0) {
+    			throw new RuntimeException("A Duração não pode ser negativa.");
+    		}
+        	filme = new Filme(titulo, preco, distribuidora, poster, duracao, ano, genero, classificacao);
+    	} catch(Exception e) {
+    		new TelaErro(this, e.getMessage());
+    	}
+    	return filme;
     }
 }

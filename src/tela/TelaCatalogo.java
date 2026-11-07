@@ -67,7 +67,7 @@ public class TelaCatalogo extends JFrame {
 
             int posicaoY = contador * 150;
 
-            JLabel lblId = new JLabel((contador + 1) + " -");
+            JLabel lblId = new JLabel(filme.getId() + " -");
             lblId.setFont(new Font("Serif", 1, 16));
             lblId.setForeground(COR_TEXTO_LABEL);
             lblId.setBounds(8, posicaoY + 45, 35, 25);
@@ -101,7 +101,7 @@ public class TelaCatalogo extends JFrame {
             lblFilmeLinha3.setBounds(150, posicaoY + 62, 570, 25);
             lblArea.add(lblFilmeLinha3);
 
-            JLabel lblFilmeLinha4 = new JLabel("Preço: " + filme.getPreco()
+            JLabel lblFilmeLinha4 = new JLabel("Preço: " + String.format("%.2f", filme.getPreco())
                     + " | Duração (min): " + filme.getDuracao());
             lblFilmeLinha4.setFont(new Font("Serif", 0, 18));
             lblFilmeLinha4.setForeground(COR_TEXTO_LABEL);
@@ -156,7 +156,19 @@ public class TelaCatalogo extends JFrame {
                 );
 
             } catch (Exception e) {
-                System.out.println("Erro ao carregar imagem.");
+            	URL urlErro = getClass().getResource("/recursos/Erro404.png");
+
+            	if (urlErro != null) {
+            	    ImageIcon erro = new ImageIcon(urlErro);
+
+            	    Image redimensionada = erro.getImage()
+            	            .getScaledInstance(88, 125, Image.SCALE_SMOOTH);
+
+            	    javax.swing.SwingUtilities.invokeLater(() -> {
+            	        label.setText("");
+            	        label.setIcon(new ImageIcon(redimensionada));
+            	    });
+            	}
             }
         }).start();
     }
